@@ -1,53 +1,17 @@
 
-// window.onload = function()
-// {
-// 	document.getElementById("button").onclick = function(){
-// 		getDarpaListings();
-// 	};
-// }
-
-	
-
-// function doWork(params) {
-// 	$.get("get_new_program_managers",function(data){
-// 		var test_data = '';
-// 		$.each(data, function(index, value){
-// 			test_data += '<tr>';
-// 			test_data += '<td>' + value.name + '</td>'
-// 			test_data += '<td>' + value.office + '</td>'
-// 			test_data += '</tr>';
-// 		});
-// 		$('table').append(test_data);
-		
-// 	});
-// 	event.preventDefault()
-// }
-
-// function getDarpaListings()
-// {
-// 	$.get("get_darpa_listings", function(data){
-// 		var test_data = '';
-// 		$.each(data, function(index,value){
-// 			console.log(value.contractname)
-// 			test_data += '<tr>';
-// 			test_data += '<td>' + value.contractname + '</td>'
-// 			test_data += '<td>' + value.noticeid + '</td>'
-// 			test_data += '<td>' + value.currentresponsedate + '</td>'
-// 			test_data += '<td>' + value.lastupdateddate + '</td>'
-// 			test_data += '<td>' + value.lastpublisheddate + '</td>'
-// 			test_data += '<td>' + value.type + '</td>'
-// 			test_data += '<td>' + value.url + '</td>'
-// 			test_data += '</tr>';
-// 		});
-// 		$('table').append(test_data);
-// 	});
-// 	event.preventDefault()
-// }
-
 $(document).ready(function() {
 
+	/* var url="https://tools-ngc.github.io/DARPA.json";
+	$.getJSON(url, function (data) {
+		for(var item in data.mto) {
+			alert(JSON.stringify(data.mto[item]));
+		}
+	}); */
 
-	$('#table').DataTable({
+
+
+
+ 	 $('#table').DataTable({
 			processing : true,
 			responsive : true,
 			language: {
@@ -56,7 +20,14 @@ $(document).ready(function() {
 			ajax:{
 				url:'https://tools-ngc.github.io/DARPA.json',
 				method: "GET",
-				dataSrc: ''
+				dataSrc: function(json){
+					var item , data = [];
+					for(var listing in json.darpa_listings){
+						item = (json.darpa_listings[listing]);
+						data.push(item);
+					}
+					return data
+				}
 			},
 			dom: 'Bfrtip',
 			order:[3,"desc"],
@@ -99,11 +70,7 @@ $(document).ready(function() {
 				}
 			]
 	});	
-
-
-
-
-
+ 
 
 	$('#tableProgramManagers').DataTable({
 		processing : true,
@@ -112,9 +79,16 @@ $(document).ready(function() {
 			'loadingRecords': '&nbsp;',
 		},                
 		ajax:{
-			url:'/api/get_new_program_managers',
+			url:'https://tools-ngc.github.io/DARPA.json',
 			method: "GET",
-			dataSrc: ''
+			dataSrc: function(json){
+				var item , data = [];
+				for(var listing in json.new_program_managers){
+					item = (json.new_program_managers[listing]);
+					data.push(item);
+				}
+				return data
+			}
 		},
 		dom: 'Bfrtip',
 		columns:[
@@ -144,9 +118,16 @@ $('#tableMTOProgramManagers').DataTable({
 		'loadingRecords': '&nbsp;',
 	},                
 	ajax:{
-		url:'/api/get_MTO_program_managers',
+		url:'https://tools-ngc.github.io/DARPA.json',
 		method: "GET",
-		dataSrc: ''
+		dataSrc: function(json){
+			var item , data = [];
+			for(var listing in json.mto){
+				item = (json.mto[listing]);
+				data.push(item);
+			}
+			return data
+		}
 	},
 	dom: 'Bfrtip',
 	columns:[
@@ -174,9 +155,16 @@ $('#tableI2OProgramManagers').DataTable({
 		'loadingRecords': '&nbsp;',
 	},                
 	ajax:{
-		url:'/api/get_I2O_program_managers',
+		url:'https://tools-ngc.github.io/DARPA.json',
 		method: "GET",
-		dataSrc: ''
+		dataSrc: function(json){
+			var item , data = [];
+			for(var listing in json.i2o){
+				item = (json.i2o[listing]);
+				data.push(item);
+			}
+			return data
+		}
 	},
 	dom: 'Bfrtip',
 	columns:[
@@ -206,9 +194,16 @@ $('#tableBTOProgramManagers').DataTable({
 		'loadingRecords': '&nbsp;',
 	},                
 	ajax:{
-		url:'/api/get_BTO_program_managers',
+		url:'https://tools-ngc.github.io/DARPA.json',
 		method: "GET",
-		dataSrc: ''
+		dataSrc: function(json){
+			var item , data = [];
+			for(var listing in json.bto){
+				item = (json.bto[listing]);
+				data.push(item);
+			}
+			return data
+		}
 	},
 	dom: 'Bfrtip',
 	columns:[
@@ -237,9 +232,16 @@ $('#tableSTOProgramManagers').DataTable({
 		'loadingRecords': '&nbsp;',
 	},                
 	ajax:{
-		url:'/api/get_STO_program_managers',
+		url:'https://tools-ngc.github.io/DARPA.json',
 		method: "GET",
-		dataSrc: ''
+		dataSrc: function(json){
+			var item , data = [];
+			for(var listing in json.sto){
+				item = (json.sto[listing]);
+				data.push(item);
+			}
+			return data
+		}
 	},
 	dom: 'Bfrtip',
 	columns:[
@@ -268,9 +270,16 @@ $('#tableTTOProgramManagers').DataTable({
 		'loadingRecords': '&nbsp;',
 	},                
 	ajax:{
-		url:'/api/get_TTO_program_managers',
+		url:'https://tools-ngc.github.io/DARPA.json',
 		method: "GET",
-		dataSrc: ''
+		dataSrc: function(json){
+			var item , data = [];
+			for(var listing in json.tto){
+				item = (json.tto[listing]);
+				data.push(item);
+			}
+			return data
+		}
 	},
 	dom: 'Bfrtip',
 	columns:[
@@ -300,9 +309,16 @@ $('#tableDSOProgramManagers').DataTable({
 		'loadingRecords': '&nbsp;',
 	},                
 	ajax:{
-		url:'/api/get_DSO_program_managers',
+		url:'https://tools-ngc.github.io/DARPA.json',
 		method: "GET",
-		dataSrc: ''
+		dataSrc: function(json){
+			var item , data = [];
+			for(var listing in json.dso){
+				item = (json.dso[listing]);
+				data.push(item);
+			}
+			return data
+		}
 	},
 	dom: 'Bfrtip',
 	columns:[
@@ -321,7 +337,7 @@ $('#tableDSOProgramManagers').DataTable({
 			}
 		}
 	]
-});	
+});	 
 
 
 
