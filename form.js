@@ -46,7 +46,7 @@
 
 $(document).ready(function() {
 
-	$.getJSON("DARPA.json", function(json) {
+	$.getJSON("https://tools-ngc.github.io/DARPA.json", function(json) {
 		console.log(json); // this will show the info it in firebug console
 	});
 
