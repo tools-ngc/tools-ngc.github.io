@@ -45,6 +45,12 @@
 // }
 
 $(document).ready(function() {
+
+	$.getJSON("DARPA.json", function(json) {
+		console.log(json); // this will show the info it in firebug console
+	});
+
+
 	$('#table').DataTable({
 			processing : true,
 			responsive : true,
