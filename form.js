@@ -46,10 +46,6 @@
 
 $(document).ready(function() {
 
-	$.getJSON("https://tools-ngc.github.io/DARPA.json", function(json) {
-		console.log(json); // this will show the info it in firebug console
-	});
-
 
 	$('#table').DataTable({
 			processing : true,
@@ -58,7 +54,7 @@ $(document).ready(function() {
 				'loadingRecords': '&nbsp;',
 			},                
 			ajax:{
-				url:'/api/get_darpa_listings',
+				url:'https://tools-ngc.github.io/DARPA.json',
 				method: "GET",
 				dataSrc: ''
 			},
