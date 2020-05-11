@@ -1,12 +1,17 @@
 
 $(document).ready(function() {
 
-	/* var url="https://tools-ngc.github.io/DARPA.json";
+	var url="https://tools-ngc.github.io/DARPA.json";
 	$.getJSON(url, function (data) {
-		for(var item in data.mto) {
-			alert(JSON.stringify(data.mto[item]));
-		}
-	}); */
+		document.getElementById("DARPA_lastupdated").innerHTML = "DARPA Listings current as of: ".concat(data.darpa_listings_lastupdated[1].lastupdated);
+		document.getElementById("NewPM_lastupdated").innerHTML = "New Program Managers current as of: ".concat(data.new_program_managers_lastupdated[1].lastupdated);
+		document.getElementById("mto_lastupdated").innerHTML = "MTO Managers current as of: ".concat(data.mto_lastupdated[1].lastupdated);
+		document.getElementById("i2o_lastupdated").innerHTML = "I2O Managers current as of: ".concat(data.i2o_lastupdated[1].lastupdated);
+		document.getElementById("bto_lastupdated").innerHTML = "BTO Managers current as of: ".concat(data.bto_lastupdated[1].lastupdated);
+		document.getElementById("sto_lastupdated").innerHTML = "STO Managers current as of: ".concat(data.sto_lastupdated[1].lastupdated);
+		document.getElementById("tto_lastupdated").innerHTML = "TTO Managers current as of: ".concat(data.tto_lastupdated[1].lastupdated);
+		document.getElementById("dso_lastupdated").innerHTML = "DSO Managers current as of: ".concat(data.dso_lastupdated[1].lastupdated);
+	}); 
 
 
 
