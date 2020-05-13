@@ -18,12 +18,8 @@ from tinydb import TinyDB, Query
 from json2html import *
 
 # Sending Email
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-import ssl
-import smtplib
 import html
-
+import win32com.client as win32
 
 class DARPAScraper:
     # Constructor - specifies the database object/file that will be used 
@@ -763,7 +759,7 @@ class DARPAScraper:
 
         return resourceID
 
-
+    # Function to scrape Darpa listings from beta.sam.gov
     def GetDarpaListings(self,databaseTableName):
 
         darpaListings = self.database.table(databaseTableName,cache_size=0) # init database table for darpaListings
@@ -793,7 +789,7 @@ class DARPAScraper:
 
             # Get the number of records per page
             numberOfRecords = int(pageData['page']['size'])
-
+            
             # Iterate through each record on the page
             for j in range(numberOfRecords):
 
@@ -804,61 +800,58 @@ class DARPAScraper:
                 color = 'None'
                 _id = (pageData['_embedded']['results'][j]['_id'])
                 url = 'https://beta.sam.gov/opp/' + _id +'/view'
-
                 currentResponseDate = (str(pageData['_embedded']['results'][j]['responseDate']).split('T'))[0]
-
-                if(currentResponseDate != 'None'):
-                    if(self.compareDates(currentResponseDate, datetime.now()) <= -2):
-                        continue
-                    elif(self.compareDates(currentResponseDate, datetime.now()) <= 14):
-                        color = 'red'
-                    elif(self.compareDates(currentResponseDate, datetime.now()) <= 30):
-                        color = 'yellow'
-                    elif(self.compareDates(currentResponseDate, datetime.now()) > 30):
-                        color = 'green'
-                                
-
                 lastUpdatedDate = (str(pageData['_embedded']['results'][j]['modifiedDate']).split('T'))[0]
                 lastPublishedDate =  (str(pageData['_embedded']['results'][j]['publishDate']).split('T'))[0]
                 contractName  = pageData['_embedded']['results'][j]['title']
                 noticeID = pageData['_embedded']['results'][j]['solicitationNumber']
                 postingType = pageData['_embedded']['results'][j]['type']['value']
 
+                if(currentResponseDate != 'None'):
+                    if(self.compareDates(currentResponseDate, datetime.now()) <= -2):
+                        continue # Disregard listings that are in the past by more than two days
+                    elif(self.compareDates(currentResponseDate, datetime.now()) <= 14):
+                        color = 'red' # Listings that are within 14 days of proposal due date will be shaded red
+                    elif(self.compareDates(currentResponseDate, datetime.now()) <= 30):
+                        color = 'yellow' # Listings that are within 30 days of proposal due date will be shaded yellow
+                    elif(self.compareDates(currentResponseDate, datetime.now()) > 30):
+                        color = 'green' # Listings that are greater than 30 days of proposal due date will be shaded green
+                                
                 # If the record is of type Award Notice, pull the awardee and the contract value, this information is on a different URL so a new get request is needed per Award Notice record
                 if(postingType=="Award Notice"):
                     awardURL = 'https://beta.sam.gov/api/prod/opps/v2/opportunities/' + _id
                     awardData = json.loads(self.getRequest(awardURL).data)
                     awardee = awardData['data']['award']['awardee']['name']
                     contractValue = awardData['data']['award']['amount']
-
-
                 
                 # Get PDF of BAA
                 if(postingType=="Presolicitation"):
-                
+                    # Get resource ID of pdf 
                     resourceID = self.getResourceIdOfPDF(_id, noticeID)
                     print(resourceID)
+
+                    # If a valid resourceID is returned
                     if(resourceID):
-                    # Get the pdf
+                        # The actual pdf is located on another URL so a get request is made
                         getPDFUrl = 'https://beta.sam.gov/api/prod/opps/v3/opportunities/resources/files/' + resourceID + '/download?api_key=null&token='
                         pdfRaw = self.getRequestPDF(getPDFUrl)
                         pdf = io.BytesIO(pdfRaw.data)
 
                         try:
-                            read_pdf = PyPDF2.PdfFileReader(pdf)
+                            read_pdf = PyPDF2.PdfFileReader(pdf) # PDF reader object
+
+                            # Loop through the first 10 pages to find the important dates/info. Usually this information is found within the first 10 pages
                             for i in range(10):
-                                try:
-                                    content = (read_pdf.getPage(i).extractText())
-                                except:
-                                    continue
-                                    print("Coudlnt Read") 
+                                # Extract Text from page
+                                content = (read_pdf.getPage(i).extractText())
+                                # If the current page is the Table of Contents, continue on to the next page
                                 isTOC = re.search(r"[Cc][Oo][Nn][Tt][Ee][Nn][Tt][Ss]",content)
                                 if(isTOC):
                                     continue
+                                # Search for "Overview Information" on the page. If the creator of the pdf follows the right DARPA listings pdf format, all important dates and information is listed on this page
                                 partIPageNumber = re.search(r"[Oo][Vv][Ee][Rr][Vv][Ii][Ee][Ww]\s+[Ii][Nn][Ff][Oo][Rr][Mm][Aa][Tt][Ii][Oo][Nn]", content)
+                                # If the page is found extract the content 
                                 if(partIPageNumber):
-                                    """ importantDatesList = re.findall(r".*\s+[a-zA-Z]+\s+\d{1,2}[,]\s+\d{1,4}.*", content)
-                                    importantDatesList = [x.replace('\n', '') for x in importantDatesList] """
                                     content = content.replace('\n', ' ')
                                     content = ' '.join(content.split())
                                     importantInformation = content
@@ -868,8 +861,7 @@ class DARPAScraper:
                             print("Exeption Occured")
                         pdfRaw.release_conn()
     
-
-                # Store record information in a json object    
+                # Store listing information in a json object    
                 jsonDataTemp =  {
 
                                 "contractname"          :   contractName,
@@ -885,11 +877,14 @@ class DARPAScraper:
                                 "importantDates"        :   importantInformation
                                 }
 
+                # Check to see if listings is already in the database
                 doesExistInDB  = darpaListings.contains( (Listings.contractname == jsonDataTemp['contractname'] ))
-
+                # If not, add the Listing JSON Object to the newDarpa list
                 if(not doesExistInDB):
                     print("Adding " + jsonDataTemp['contractname'] + " to new data")
                     newDarpa.append(jsonDataTemp)
+
+                # If the listing already exists in the database, check to see if it has been updated
                 else:
                     print(jsonDataTemp['contractname'] + "already Exists in db")
                     if(jsonDataTemp['type'] != "Award Notice"):
@@ -898,22 +893,24 @@ class DARPAScraper:
                             if(entry['noticeid'] == jsonDataTemp['noticeid']):
                                 if( entry['lastupdateddate'] != jsonDataTemp['lastupdateddate']  ):
                                     print(jsonDataTemp['contractname'] + " has been updated")
-
+                                    # If the listing has been updated since last run, add the Listing JSON object to the newUpdate List
                                     newUpdates.append(jsonDataTemp)
                                 else:
                                     print(jsonDataTemp['contractname'] + " has NOT been updated")
 
                 # Append JSON obects for each record together to form the full data. 
-                print(jsonDataTemp['importantDates'])
-                #print('\n')
+                print(jsonDataTemp)
                 full_data.append(jsonDataTemp)
         
+        # Delete all old entries from database table
         print("Deleting contents of database")
         darpaListings.truncate()
 
+        # Insert most recent entries into database
         print("Inserting new data")  
         darpaListings.insert_multiple(full_data)
 
+        # Update the lastupdated date to reflect the date of the last sucessful scraper run
         darpa_listings_lastupdated.truncate()
         now = datetime.now()
         time = now.strftime("%m/%d/%Y")
@@ -925,29 +922,31 @@ class DARPAScraper:
         print("New Updates")
         print(newUpdates)
 
+        # Queries to group listings based on color or days till proposal due date
         green = darpaListings.search(Listings.color == 'green')
         yellow = darpaListings.search(Listings.color == 'yellow')
         red = darpaListings.search(Listings.color == 'red')
 
+        # Convert json to html table so results can be sent via an email
         newDarpaListingsTable = json2html.convert(json=newDarpa)
         updatedDarpaListingsTable = json2html.convert(json=newUpdates)
         redTable= json2html.convert(json = red)
         yellowTable= json2html.convert(json = yellow)
         greenTable= json2html.convert(json = green)
 
-
-
         # Return full_data 
         print("DARPA Listings Scrape Sucessful")
 
         return newDarpaListingsTable, updatedDarpaListingsTable, redTable, yellowTable, greenTable
 
+    # Function to send email containing results from the last run of the scraper
     def sendEmail(self, newDarpaListingsTable, updatedDarpaListingsTable, redTable, yellowTable, greenTable, newPMHTMLTable):
-        # load the file
+        # load the email template
         with open("emailTemplate.html") as inf:
             txt = inf.read()
             soup = BeautifulSoup(txt,features="html.parser")
 
+        # Use beautiful soup to find elements in the emailTemplate file
         newDarpaListings = soup.find(class_="NewDarpaListingsText")
         updatedDarpaListings = soup.find(class_="UpdatedDarpaListingsText")
         lessThan14 = soup.find(class_="Darpa_less_than_14")
@@ -955,6 +954,7 @@ class DARPAScraper:
         greaterThan30 = soup.find(class_="Darpa_greater_than_30")
         newPMListings = soup.find(class_='NewProgramManagersText')
 
+        # Insert the tables after the elements found above
         newDarpaListings.insert_after(newDarpaListingsTable)
         updatedDarpaListings.insert_after(updatedDarpaListingsTable)
         lessThan14.insert_after(redTable)
@@ -962,37 +962,25 @@ class DARPAScraper:
         greaterThan30.insert_after(greenTable)
         newPMListings.insert_after(newPMHTMLTable)
 
+        # Convert to html
         soup = html.unescape(str(soup))
+
         # Send email
         print("Sending Email")
-    
-        sender_email = 'ngcscraper@gmail.com'
-        reciever_email = ['anshul.devnani@ngc.com', 'Marcos.Ward@ngc.com', 'DavidSLin@ngc.com']
-        password = "1qaz@WSX3edc$RFV"
+        outlook = win32.Dispatch('outlook.application') # Start Outlook
+        mail = outlook.CreateItem(0)   # Create Email
+        mail.SentOnBehalfOfName = sys.argv[3] #'anshul.devnani@ngc.com' # Sender
+        mail.To = sys.argv[4] #'anshul.devnani@ngc.com;anshul1997@gmail.com' # Reciever
 
-        message = MIMEMultipart("alternative")
-        message["Subject"] = "No Reply - DARPA Listings Update"
-        message["From"] = sender_email
-        message["To"] = ", ".join(reciever_email)
+        # Construct subject 
+        now = datetime.now()
+        time = now.strftime("%m/%d/%Y") 
+        mail.Subject = 'Automated DARPA Scraper Results - ' + time
 
-    
-        part2 = MIMEText(soup, "html")
-
-        message.attach(part2)
-
-        context = ssl.create_default_context()
-
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
-            server.login(sender_email, password)
-            server.sendmail(
-                sender_email,reciever_email, message.as_string()
-            )
-        print("email sent")
-        
-
-
-
-
+        mail.HTMLBody = soup # Insert HTML Data into email
+        mail.Send() # Send Email
+        print("Email Sent")
+                
 
 
 
