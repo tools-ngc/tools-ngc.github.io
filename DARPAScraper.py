@@ -744,8 +744,8 @@ class DARPAScraper:
                         dateString = (resourcesForListing['_embedded']['opportunityAttachmentList'][0]['attachments'][i]['postedDate'])
                         dateToResourceIDMap.update({        self.formatDate(dateString)  :   resourcesForListing['_embedded']['opportunityAttachmentList'][0]['attachments'][i]['resourceId']   })
                 except Exception as e:
-                    print("Execption in getResourceIDofPDF")
-                    print(e)
+                    #print("Execption in getResourceIDofPDF")
+                    #print(e)
                     continue
         # Sort the dateToResourceIDMap the last key value pair is the most recent document of interest          
         od = collections.OrderedDict(sorted(dateToResourceIDMap.items()))
@@ -828,7 +828,7 @@ class DARPAScraper:
                 if(postingType=="Presolicitation"):
                     # Get resource ID of pdf 
                     resourceID = self.getResourceIdOfPDF(_id, noticeID)
-                    print(resourceID)
+                    #print(resourceID)
 
                     # If a valid resourceID is returned
                     if(resourceID):
@@ -858,7 +858,7 @@ class DARPAScraper:
                                     break
                         except:
                             pass
-                            print("Exeption Occured")
+                            #print("Exeption Occured")
                         pdfRaw.release_conn()
     
                 # Store listing information in a json object    
@@ -881,33 +881,28 @@ class DARPAScraper:
                 doesExistInDB  = darpaListings.contains( (Listings.contractname == jsonDataTemp['contractname'] ))
                 # If not, add the Listing JSON Object to the newDarpa list
                 if(not doesExistInDB):
-                    print("Adding " + jsonDataTemp['contractname'] + " to new data")
+                    print(jsonDataTemp['contractname'] + " is a new listing")
                     newDarpa.append(jsonDataTemp)
 
                 # If the listing already exists in the database, check to see if it has been updated
                 else:
-                    print(jsonDataTemp['contractname'] + "already Exists in db")
                     if(jsonDataTemp['type'] != "Award Notice"):
                         entries = darpaListings.search(Listings.contractname == jsonDataTemp['contractname'])
                         for entry in entries:
                             if(entry['noticeid'] == jsonDataTemp['noticeid']):
                                 if( entry['lastupdateddate'] != jsonDataTemp['lastupdateddate']  ):
-                                    print(jsonDataTemp['contractname'] + " has been updated")
+                                    print(jsonDataTemp['contractname'] + " is an updated listing")
                                     # If the listing has been updated since last run, add the Listing JSON object to the newUpdate List
                                     newUpdates.append(jsonDataTemp)
-                                else:
-                                    print(jsonDataTemp['contractname'] + " has NOT been updated")
 
                 # Append JSON obects for each record together to form the full data. 
                 print(jsonDataTemp)
                 full_data.append(jsonDataTemp)
         
         # Delete all old entries from database table
-        print("Deleting contents of database")
         darpaListings.truncate()
 
         # Insert most recent entries into database
-        print("Inserting new data")  
         darpaListings.insert_multiple(full_data)
 
         # Update the lastupdated date to reflect the date of the last sucessful scraper run
