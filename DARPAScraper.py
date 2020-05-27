@@ -1,4 +1,6 @@
 import sys
+import copy
+import logging
 # Pulling in and scraping html data
 from bs4 import BeautifulSoup
 import json
@@ -21,12 +23,16 @@ from json2html import *
 import html
 import win32com.client as win32
 
+
+# Init logging
+logging.basicConfig(handlers=[logging.FileHandler('scraper.log', 'w', 'utf-8')], format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',datefmt='%H:%M:%S',level=logging.DEBUG)
+
 class DARPAScraper:
     # Constructor - specifies the database object/file that will be used 
     def __init__(self,databaseObject):
         self.database = databaseObject
     
-    # Function that constructs the URL for darpa staff members. Used for getting projects that the project manager is over seeing
+    # Function that constructs the URL for darpa staff members. Used for getting projects that the project manager is managing
     def createAboutURL(self,name):
         aboutBaseURL = 'https://www.darpa.mil/staff/'
         tempName = name.split(' ')
@@ -199,16 +205,15 @@ class DARPAScraper:
                         "programs" : programsList
                     }
                     full_data.append(jsonDataTemp)
-                    print(jsonDataTemp)
+                    logging.info(jsonDataTemp)
 
                 # Move to next page
                 pageNumber = pageNumber + 1
                 URL = 'https://www.darpa.mil/about-us/offices/mto/staff-list?PP=' + str(pageNumber)
 
             # Clear the database table and insert the new updated data
-            print("Clearing Table")
+            logging.info("Clearing and Updating Database File")
             mto.truncate()
-            print("Writing Updated Data")
             mto.insert_multiple(full_data)
 
             mto_lastupdated.truncate()
@@ -219,10 +224,10 @@ class DARPAScraper:
 
         # if an error occurs return
         except:
-            print("Error getting MTO Program managers")
+            logging.error("Error Scraping MTO Managers")
             return
 
-        print("MTO Managers Scrape Successful")
+        logging.info("MTO Managers Scrape Successful")
 
 
     # Function that scrapes all I2O managers from DARPA website
@@ -278,16 +283,15 @@ class DARPAScraper:
                         "programs" : programsList
                     }
                     full_data.append(jsonDataTemp)
-                    print(jsonDataTemp)
+                    logging.info(jsonDataTemp)
 
                 # Move to next page
                 pageNumber = pageNumber + 1
                 URL = 'https://www.darpa.mil/about-us/offices/i2o/staff-list?PP=' + str(pageNumber)
 
             # if scrape was successful clear the database table and insert the new updated data
-            print("Clearing Table")
+            logging.info("Clearing and Updating Database File")
             i2o.truncate()
-            print("Writing Updated Data")
             i2o.insert_multiple(full_data)
 
             i2o_lastupdated.truncate()
@@ -297,10 +301,10 @@ class DARPAScraper:
 
          # if an error occurs return   
         except:
-            print("Error Getting I2O Program Managers")
+            logging.error("Error Scraping I2O Managers")
             return
         
-        print("I2O Managers Scrape Sucessfull")
+        logging.info("I2O Managers Scrape Successful")
 
     # Function that scrapes all BTO managers from DARPA website
     def GetBTOProgramManagers(self, databaseTableName):
@@ -355,16 +359,17 @@ class DARPAScraper:
                         "programs" : programsList
                     }
                     full_data.append(jsonDataTemp)
-                    print(jsonDataTemp)
+                    logging.info(jsonDataTemp)
+                    
 
                 # Move to next page
                 pageNumber = pageNumber + 1
                 URL = 'https://www.darpa.mil/about-us/offices/bto/staff-list?PP=' + str(pageNumber)
 
             # if scrape was successful clear the database table and insert the new updated data
-            print("Clearing Table")
+
+            logging.info("Clearing and Updating Database File")
             bto.truncate()
-            print("Writing Updated Data")
             bto.insert_multiple(full_data)
 
             bto_lastupdated.truncate()
@@ -374,10 +379,10 @@ class DARPAScraper:
 
         # if an error occurs return    
         except:
-            print("Error Getting BTO Program Managers")
+            logging.error("Error Scraping BTO Managers")
             return
 
-        print("BTO Managers Scrape Sucessfull")
+        logging.info("BTO Managers Scrape Successful")
 
 
     # Function that scrapes all STO managers from DARPA website
@@ -432,16 +437,15 @@ class DARPAScraper:
                         "programs" : programsList
                     }
                     full_data.append(jsonDataTemp)
-                    print(jsonDataTemp)
+                    logging.info(jsonDataTemp)
 
                 # Move to next page
                 pageNumber = pageNumber + 1
                 URL = 'https://www.darpa.mil/about-us/offices/sto/staff-list?PP=' + str(pageNumber)
             
             # if scrape was successful clear the database table and insert the new updated data
-            print("Clearing Table")
+            logging.info("Clearing and Updating Database File")
             sto.truncate()
-            print("Writing Updated Data")
             sto.insert_multiple(full_data)
 
             sto_lastupdated.truncate()
@@ -451,9 +455,9 @@ class DARPAScraper:
 
         # if an error occurs return    
         except:
-            print("Error Getting STO Program Managers")
+            logging.error("Error Scraping STO Managers")
             return 
-        print("STO Managers Scrape Sucessful")
+        logging.info("STO Managers Scrape Successful")
 
 
     # Function that scrapes all TTO managers from DARPA website
@@ -510,16 +514,15 @@ class DARPAScraper:
                         "programs" : programsList
                     }
                     full_data.append(jsonDataTemp)
-                    print(jsonDataTemp)
+                    logging.info(jsonDataTemp)
 
                 # Move to next page    
                 pageNumber = pageNumber + 1
                 URL = 'https://www.darpa.mil/about-us/offices/tto/staff-list?PP=' + str(pageNumber)
 
             # if scrape was successful clear the database table and insert the new updated data
-            print("Clearing Table")
+            logging.info("Clearing and Updating Database File")
             tto.truncate()
-            print("Writing Updated Data")
             tto.insert_multiple(full_data)
 
             tto_lastupdated.truncate()
@@ -529,10 +532,10 @@ class DARPAScraper:
 
         # if an error occurs return   
         except:
-            print("Error Getting TTO Program Managers")
+            logging.error("Error Scraping TTO Managers")
             return
 
-        print("TTO Managers Scrape Sucessful")
+        logging.info("TTO Managers Scrape Successful")
 
 
     # Function that scrapes all DSO managers from DARPA website
@@ -588,16 +591,15 @@ class DARPAScraper:
                         "programs" : programsList
                     }
                     full_data.append(jsonDataTemp)
-                    print(jsonDataTemp)
+                    logging.info(jsonDataTemp)
 
                  # Move to next page    
                 pageNumber = pageNumber + 1
                 URL = 'https://www.darpa.mil/about-us/offices/dso/staff-list?PP=' + str(pageNumber)
 
             # if scrape was successful clear the database table and insert the new updated data
-            print("Clearing Table")
+            logging.info("Clearing and Updating Database File")
             dso.truncate()
-            print("Writing Updated Data")
             dso.insert_multiple(full_data)
 
             
@@ -609,10 +611,10 @@ class DARPAScraper:
 
         # if an error occurs return   
         except:
-            print("Error Getting DSO Program Managers")
+            logging.error("Error Scraping DSO Managers")
             return
         
-        print("DSO Managers Scrape Sucessful")
+        logging.info("DSO Managers Scrape Successful")
 
 
     # Function that scrapes all new program managers from DARPA website
@@ -667,21 +669,19 @@ class DARPAScraper:
                 doesExistInDB = new_program_managers.contains( (Listings.name == jsonDataTemp['name']))
                 # If it does not, it means that this JSON object new since the last run of this script
                 if(not doesExistInDB):
-                    print("Adding " + jsonDataTemp['name'] + " to new data")
-
+                    logging.info("Adding " + jsonDataTemp['name'] + " to new data")
                     # Add the update to the newPM list, this list will be converted to an html table and attached to the daily update email
                     newPM.append(jsonDataTemp)
                 else:
-                    print(jsonDataTemp['name'] + "already Exists in db")
+                    logging.info(jsonDataTemp['name'] + " already exists in database")
                 
                 # Add manager JSON object to full data list
                 full_data.append(jsonDataTemp)
-                print(jsonDataTemp)
+                logging.info(jsonDataTemp)
 
             # if scrape was successful clear the database table and insert the new updated data
-            print("Clearing Table")
+            logging.info("Clearing and Updating Database File")
             new_program_managers.truncate()
-            print("Writing Updated Data")
             new_program_managers.insert_multiple(full_data)
 
             new_program_managers_lastupdated.truncate()
@@ -693,11 +693,10 @@ class DARPAScraper:
             newPMHTMLTable = json2html.convert(json = newPM)
 
         except Exception as e:
-            print("Error Getting New Program Managers")
-            print(e)
+            logging.error("Error Scraping New Program Managers")
             return "Error Occured while Scraping New Program Managers"
 
-        print("New Program Managers Scrape Sucessful")
+        logging.info("New Program Managers Scrape Successful")
         # Return html table
         return newPMHTMLTable
 
@@ -758,6 +757,23 @@ class DARPAScraper:
         resourceID = lastValue[1]
 
         return resourceID
+    
+    def formatForEmail(self,data):
+        del data['noticeid']
+        del data['lastupdateddate']
+        del data['lastpublisheddate']
+        del data['url']
+        del data['awardee']
+        del data['contractValue']
+        del data['color']
+        del data['importantDates']
+
+        data['Contract Name'] = data.pop('contractname')
+        data['Proposal Due Date'] = data.pop('proposalduedate')
+        data['Type'] = data.pop('type')
+        #jsonData['Important Info'] = jsonData.pop('importantDates')
+
+        return data
 
     # Function to scrape Darpa listings from beta.sam.gov
     def GetDarpaListings(self,databaseTableName):
@@ -881,8 +897,10 @@ class DARPAScraper:
                 doesExistInDB  = darpaListings.contains( (Listings.contractname == jsonDataTemp['contractname'] ))
                 # If not, add the Listing JSON Object to the newDarpa list
                 if(not doesExistInDB):
-                    print(jsonDataTemp['contractname'] + " is a new listing")
-                    newDarpa.append(jsonDataTemp)
+                    logging.info(jsonDataTemp['contractname'] + " is a new listing")
+                    temp = copy.deepcopy(jsonDataTemp)
+                    jsonForEmail = self.formatForEmail(temp)
+                    newDarpa.append(jsonForEmail)
 
                 # If the listing already exists in the database, check to see if it has been updated
                 else:
@@ -891,12 +909,14 @@ class DARPAScraper:
                         for entry in entries:
                             if(entry['noticeid'] == jsonDataTemp['noticeid']):
                                 if( entry['lastupdateddate'] != jsonDataTemp['lastupdateddate']  ):
-                                    print(jsonDataTemp['contractname'] + " is an updated listing")
+                                    logging.info(jsonDataTemp['contractname'] + " is an updated listing")
                                     # If the listing has been updated since last run, add the Listing JSON object to the newUpdate List
-                                    newUpdates.append(jsonDataTemp)
+                                    temp = copy.deepcopy(jsonDataTemp)
+                                    jsonForEmail = self.formatForEmail(temp)
+                                    newUpdates.append(jsonForEmail)
 
                 # Append JSON obects for each record together to form the full data. 
-                print(jsonDataTemp)
+                logging.info(jsonDataTemp)
                 full_data.append(jsonDataTemp)
         
         # Delete all old entries from database table
@@ -911,11 +931,11 @@ class DARPAScraper:
         time = now.strftime("%m/%d/%Y")
         darpa_listings_lastupdated.insert({'lastupdated' : time})
         
-        print("New Listings")
-        print(newDarpa)
+        logging.info("New Listings")
+        logging.info(newDarpa)
 
-        print("New Updates")
-        print(newUpdates)
+        logging.info("New Updates")
+        logging.info(newUpdates)
 
         # Queries to group listings based on color or days till proposal due date
         green = darpaListings.search(Listings.color == 'green')
@@ -930,12 +950,13 @@ class DARPAScraper:
         greenTable= json2html.convert(json = green)
 
         # Return full_data 
-        print("DARPA Listings Scrape Sucessful")
+        logging.info("DARPA Listings Scrape Sucessful")
 
         return newDarpaListingsTable, updatedDarpaListingsTable, redTable, yellowTable, greenTable
 
     # Function to send email containing results from the last run of the scraper
-    def sendEmail(self, newDarpaListingsTable, updatedDarpaListingsTable, redTable, yellowTable, greenTable, newPMHTMLTable):
+    def generateEmailBody(self, newDarpaListingsTable, updatedDarpaListingsTable, redTable, yellowTable, greenTable, newPMHTMLTable):
+        logging.info("Generating Automated Email Body.....")
         # load the email template
         with open("emailTemplate.html") as inf:
             txt = inf.read()
@@ -944,39 +965,28 @@ class DARPAScraper:
         # Use beautiful soup to find elements in the emailTemplate file
         newDarpaListings = soup.find(class_="NewDarpaListingsText")
         updatedDarpaListings = soup.find(class_="UpdatedDarpaListingsText")
-        lessThan14 = soup.find(class_="Darpa_less_than_14")
-        between14and30 = soup.find(class_="Darpa_between_14_and_30")
-        greaterThan30 = soup.find(class_="Darpa_greater_than_30")
+        #lessThan14 = soup.find(class_="Darpa_less_than_14")
+        #between14and30 = soup.find(class_="Darpa_between_14_and_30")
+        #greaterThan30 = soup.find(class_="Darpa_greater_than_30")
         newPMListings = soup.find(class_='NewProgramManagersText')
 
         # Insert the tables after the elements found above
         newDarpaListings.insert_after(newDarpaListingsTable)
         updatedDarpaListings.insert_after(updatedDarpaListingsTable)
-        lessThan14.insert_after(redTable)
-        between14and30.insert_after(yellowTable)
-        greaterThan30.insert_after(greenTable)
+        #lessThan14.insert_after(redTable)
+        #between14and30.insert_after(yellowTable)
+        #greaterThan30.insert_after(greenTable)
         newPMListings.insert_after(newPMHTMLTable)
 
         # Convert to html
         soup = html.unescape(str(soup))
 
-        # Send email
-        print("Sending Email")
-        outlook = win32.Dispatch('outlook.application') # Start Outlook
-        mail = outlook.CreateItem(0)   # Create Email
-        mail.SentOnBehalfOfName = sys.argv[3] #'anshul.devnani@ngc.com' # Sender
-        mail.To = sys.argv[4] #'anshul.devnani@ngc.com;anshul1997@gmail.com' # Reciever
+        with open("automatedEmail.html", "w", encoding='utf-8') as file:
+            file.write(str(soup))
 
-        # Construct subject 
-        now = datetime.now()
-        time = now.strftime("%m/%d/%Y") 
-        mail.Subject = 'Automated DARPA Scraper Results - ' + time
+        logging.info("Automated Email Body Sucessfully Generated")
 
-        mail.HTMLBody = soup # Insert HTML Data into email
-        mail.Send() # Send Email
-        print("Email Sent")
-                
-
+            
 
 
 db = TinyDB('DARPA.json')
@@ -999,4 +1009,4 @@ newDarpaListingsTable, updatedDarpaListingsTable, redTable, yellowTable, greenTa
 
 newPMHTMLTable = scraper.GetNewProgramManagers('new_program_managers')
 
-scraper.sendEmail(newDarpaListingsTable,updatedDarpaListingsTable,redTable,yellowTable,greenTable,newPMHTMLTable)
+scraper.generateEmailBody(newDarpaListingsTable,updatedDarpaListingsTable,redTable,yellowTable,greenTable,newPMHTMLTable)
