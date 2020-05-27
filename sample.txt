@@ -1,1 +1,1 @@
-This is a sample textts file 
+This is a sample hgtextts file 
