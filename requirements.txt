@@ -5,5 +5,5 @@ PyPDF2==1.26.0
 pywin32==227
 soupsieve==2.0
 tinydb==4.1.1
-urllib3==1.25.9
+urllib3==1.26.5
 wincertstore==0.2
